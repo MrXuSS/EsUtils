@@ -3,6 +3,7 @@ package com.haiyi.utils;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -358,5 +359,108 @@ public class EsClientImpl implements EsClient{
             }
         }
         return result;
+    }
+
+    /**
+     * 向es中创建文档索引, 若es中已存在改index，则插入失败。（异步）
+     *
+     * @param indexName 索引名称
+     * @param document  id
+     * @param jsonStr   json字符串， 要存入的数据
+     */
+    public void insertIndexWithJsonStrAsync(String indexName, String document, String jsonStr) {
+        Boolean indexExists = isIndexExists(indexName, document);
+        if (!indexExists) {
+            IndexRequest indexRequest = new IndexRequest(indexName)
+                    .id(document)
+                    .source(jsonStr, XContentType.JSON);
+            ActionListener<IndexResponse> listener = new ActionListener<IndexResponse>() {
+                public void onResponse(IndexResponse indexResponse) {
+                    log.info("索引"+indexResponse.getIndex()+"--"+indexResponse.getId()+"插入成功");
+                }
+
+                public void onFailure(Exception e) {
+                    e.printStackTrace();
+                }
+            };
+            EsServerManager.getInstance().getClient().indexAsync(indexRequest, RequestOptions.DEFAULT, listener);
+        }else{
+            log.info("插入失败"+"索引"+indexName+"--"+document+"--"+"已存在");
+        }
+    }
+
+    /**
+     * 根据索引名称和id删除数据，（异步）
+     * @param indexName 索引名称
+     * @param document id
+     * @return 是否删除成功； 索引不存在返货false
+     */
+    public void deleteIndexAsync(String indexName, String document) {
+        Boolean indexExists = isIndexExists(indexName, document);
+        if(indexExists) {
+            final DeleteRequest deleteRequest = new DeleteRequest(indexName, document);
+            ActionListener<DeleteResponse> listener = new ActionListener<DeleteResponse>() {
+                public void onResponse(DeleteResponse deleteResponse) {
+                    log.info(deleteResponse.getIndex() + "--" + deleteResponse.getId() + "已删除");
+                }
+
+                public void onFailure(Exception e) {
+                    e.printStackTrace();
+                }
+            };
+            EsServerManager.getInstance().getClient().deleteAsync(deleteRequest, RequestOptions.DEFAULT, listener);
+        }else {
+            log.info("索引"+indexName+"--"+document+"不存在");
+        }
+    }
+
+    /**
+     * 删除indexName下的所有索引数据，（异步）
+     * @param indexName 索引名称
+     * @return 删除是否成功。
+     */
+    public void deleteIndexAsync(String indexName) {
+        Boolean indexExists = isIndexExists(indexName);
+        if(indexExists){
+            final DeleteIndexRequest deleteRequest = new DeleteIndexRequest(indexName);
+            ActionListener<AcknowledgedResponse> listener = new ActionListener<AcknowledgedResponse>() {
+                public void onResponse(AcknowledgedResponse AcknowledgedResponse) {
+                    log.info(AcknowledgedResponse.toString());
+                }
+
+                public void onFailure(Exception e) {
+                    e.printStackTrace();
+                }
+            };
+            EsServerManager.getInstance().getClient().indices().deleteAsync(deleteRequest, RequestOptions.DEFAULT, listener);
+        }else {
+            log.info("索引"+indexName+"不存在");
+        }
+    }
+
+    /**
+     * 根据 index 和 id 更新 索引数据 （异步）
+     * @param indexName 索引名称
+     * @param document id
+     * @param jsonStr 要更新的json
+     * @return 是否更新成功
+     */
+    public void updateIndexAsync(String indexName, String document, String jsonStr) {
+        Boolean indexExists = isIndexExists(indexName, document);
+        if(indexExists) {
+            final UpdateRequest updateRequest = new UpdateRequest(indexName, document).doc(jsonStr, XContentType.JSON);
+            ActionListener<UpdateResponse> listener = new ActionListener<UpdateResponse>() {
+                public void onResponse(UpdateResponse updateResponse) {
+                    log.info("索引" + updateResponse.getIndex() + "--" + updateResponse.getId() + "更新成功");
+                }
+
+                public void onFailure(Exception e) {
+                    e.printStackTrace();
+                }
+            };
+            EsServerManager.getInstance().getClient().updateAsync(updateRequest, RequestOptions.DEFAULT, listener);
+        }else {
+            log.info("索引"+indexName+"--"+document+"不存在");
+        }
     }
 }

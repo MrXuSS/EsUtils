@@ -109,4 +109,38 @@ public interface EsClient {
      * @return 数据量条数
      */
     public Long searchTotalHitsNum(String indexName);
+
+    /**
+     * 向es中创建文档索引, 若es中已存在改index，则插入失败。（异步）
+     *
+     * @param indexName 索引名称
+     * @param document  id
+     * @param jsonStr   json字符串， 要存入的数据
+     */
+    public void insertIndexWithJsonStrAsync(String indexName, String document, String jsonStr);
+
+    /**
+     * 根据索引名称和id删除数据，（异步）
+     * @param indexName 索引名称
+     * @param document id
+     * @return 是否删除成功； 索引不存在返货false
+     */
+    public void deleteIndexAsync(String indexName, String document);
+
+    /**
+     * 删除indexName下的所有索引数据，（异步）
+     * @param indexName 索引名称
+     * @return 删除是否成功。
+     */
+    public void deleteIndexAsync(String indexName);
+
+    /**
+     * 根据 index 和 id 更新 索引数据 （异步）
+     * @param indexName 索引名称
+     * @param document id
+     * @param jsonStr 要更新的json
+     * @return 是否更新成功
+     */
+    public void updateIndexAsync(String indexName, String document, String jsonStr);
+
 }

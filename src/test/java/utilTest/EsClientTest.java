@@ -32,11 +32,19 @@ public class EsClientTest {
     @Test
     public void testInsertIndexWithJson(){
         EsClientImpl esClient = new EsClientImpl();
-        Student student = new Student(10, "xiaoming", 18);
+        Student student = new Student(1, "xiaoming", 18);
         String jsonString = JSON.toJSONString(student);
         System.out.println(jsonString);
         Boolean isInsert = esClient.insertIndexWithJsonStr("esutilstest", student.id.toString(), jsonString);
         System.out.println(isInsert);
+    }
+
+    @Test
+    public void testInsertIndexWithJsonAsnyc(){
+        EsClientImpl esClient = new EsClientImpl();
+        Student student = new Student(12, "xiaoming", 18);
+        String jsonString = JSON.toJSONString(student);
+        esClient.insertIndexWithJsonStrAsync("esutilstest", student.id.toString(), jsonString);
     }
 
     @Test
@@ -56,8 +64,14 @@ public class EsClientTest {
     @Test
     public void testDeleteIndex(){
         EsClientImpl esClient = new EsClientImpl();
-        Boolean deleteIndexBool = esClient.deleteIndex("esutilstest", "3");
+        Boolean deleteIndexBool = esClient.deleteIndex("esutilstest", "9");
         System.out.println(deleteIndexBool);
+    }
+
+    @Test
+    public void testDeleteIndexAsync(){
+        EsClientImpl esClient = new EsClientImpl();
+        esClient.deleteIndexAsync("esutilstest", "7");
     }
 
     @Test
@@ -65,6 +79,12 @@ public class EsClientTest {
         EsClientImpl esClient = new EsClientImpl();
         Boolean deleteIndexBool = esClient.deleteIndex("esutilstest2");
         System.out.println(deleteIndexBool);
+    }
+
+    @Test
+    public void testDeleteIndexAllDataAsnyc(){
+        EsClientImpl esClient = new EsClientImpl();
+        esClient.deleteIndexAsync("esutilstest");
     }
 
     @Test
@@ -80,6 +100,13 @@ public class EsClientTest {
         EsClientImpl esClient = new EsClientImpl();
         Boolean esutilstestBool = esClient.updateIndex("esutilstest", "1", JSON.toJSONString(xiaoming));
         System.out.println(esutilstestBool);
+    }
+
+    @Test
+    public void testUpdateIndexAsync(){
+        Student xiaoming = new Student(1, "xiaohong", 18);
+        EsClientImpl esClient = new EsClientImpl();
+        esClient.updateIndexAsync("esutilstest", "1", JSON.toJSONString(xiaoming));
     }
 
     @Test
