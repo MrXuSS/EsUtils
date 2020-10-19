@@ -139,4 +139,18 @@ public interface EsClient {
      */
     public void updateIndexAsync(String indexName, String document, String jsonStr);
 
+    /**
+     * 索引重建(同步)。 注意：目标索引需要提前创建好
+     * @param fromIndex 重新索引的索引名
+     * @param destIndex 重新索引后的索引名
+     * @return 新创建的文档数
+     */
+    public Long reIndex(String fromIndex, String destIndex);
+
+    /**
+     * 索引重建（异步）。注意：目标索引需要提前创建好
+     * @param fromIndex 重新索引的索引名
+     * @param destIndex 重新索引后的索引名
+     */
+    public void reIndexAsync(String fromIndex, String destIndex);
 }

@@ -1,6 +1,7 @@
 package com.haiyi.utils;
 
 import com.alibaba.fastjson.JSON;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.elasticsearch.action.ActionListener;
@@ -24,12 +25,15 @@ import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.ReindexRequest;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 
+import javax.swing.text.EditorKit;
 import java.io.IOException;
 import java.util.*;
 
@@ -461,6 +465,72 @@ public class EsClientImpl implements EsClient{
             EsServerManager.getInstance().getClient().updateAsync(updateRequest, RequestOptions.DEFAULT, listener);
         }else {
             log.info("索引"+indexName+"--"+document+"不存在");
+        }
+    }
+
+    /**
+     * 索引重建(同步)。 注意：目标索引需要提前创建好
+     * @param fromIndex 重新索引的索引名
+     * @param destIndex 重新索引后的索引名
+     * @return 新创建的文档数
+     */
+    public Long reIndex(String fromIndex, String destIndex) {
+        Boolean fromIndexExists = isIndexExists(fromIndex);
+        Boolean destIndexExists = isIndexExists(destIndex);
+        Long result = 0L;
+        if(fromIndexExists && destIndexExists){
+            ReindexRequest reindexRequest = new ReindexRequest();
+            reindexRequest.setSourceIndices(fromIndex);
+            reindexRequest.setDestIndex(destIndex);
+            BulkByScrollResponse reindexResponse = null;
+            try {
+                reindexResponse = EsServerManager.getInstance().getClient().reindex(reindexRequest, RequestOptions.DEFAULT);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if(reindexResponse != null) {
+                result = reindexResponse.getCreated();
+            }
+        }else {
+            if(!fromIndexExists){
+                log.info("fromIndex不存在");
+            }
+            if(!destIndexExists){
+                log.info("destIndex不存在");
+            }
+        }
+        return result;
+    }
+    /**
+     * 索引重建(异步)。 注意：目标索引需要提前创建好
+     * @param fromIndex 重新索引的索引名
+     * @param destIndex 重新索引后的索引名
+     */
+    public void reIndexAsync(String fromIndex, String destIndex) {
+        Boolean fromIndexExists = isIndexExists(fromIndex);
+        Boolean destIndexExists = isIndexExists(destIndex);
+        if(fromIndexExists && destIndexExists){
+            ReindexRequest reindexRequest = new ReindexRequest();
+            reindexRequest.setSourceIndices(fromIndex);
+            reindexRequest.setDestIndex(destIndex);
+            ActionListener<BulkByScrollResponse> actionListener = new ActionListener<BulkByScrollResponse>() {
+                public void onResponse(BulkByScrollResponse bulkByScrollResponse) {
+                    log.info("新创建的索引数" + bulkByScrollResponse.getCreated());
+                    log.info("更新的索引数"+ bulkByScrollResponse.getUpdated());
+                }
+
+                public void onFailure(Exception e) {
+                    e.printStackTrace();
+                }
+            };
+            EsServerManager.getInstance().getClient().reindexAsync(reindexRequest, RequestOptions.DEFAULT, actionListener);
+        }else {
+            if(!fromIndexExists){
+                log.info("fromIndex不存在");
+            }
+            if(!destIndexExists){
+                log.info("destIndex不存在");
+            }
         }
     }
 }

@@ -32,7 +32,7 @@ public class EsClientTest {
     @Test
     public void testInsertIndexWithJson(){
         EsClientImpl esClient = new EsClientImpl();
-        Student student = new Student(1, "xiaoming", 18);
+        Student student = new Student(3, "xiaoming", 18);
         String jsonString = JSON.toJSONString(student);
         System.out.println(jsonString);
         Boolean isInsert = esClient.insertIndexWithJsonStr("esutilstest", student.id.toString(), jsonString);
@@ -64,7 +64,7 @@ public class EsClientTest {
     @Test
     public void testDeleteIndex(){
         EsClientImpl esClient = new EsClientImpl();
-        Boolean deleteIndexBool = esClient.deleteIndex("esutilstest", "9");
+        Boolean deleteIndexBool = esClient.deleteIndex("esutilstest_20201019");
         System.out.println(deleteIndexBool);
     }
 
@@ -128,6 +128,19 @@ public class EsClientTest {
         EsClientImpl esClient = new EsClientImpl();
         Long totalHitsNum = esClient.searchTotalHitsNum("esutilstest");
         System.out.println(totalHitsNum);
+    }
+
+    @Test
+    public void testReIndex(){
+        EsClientImpl esClient = new EsClientImpl();
+        Long reIndexNum = esClient.reIndex("esutilstest", "esutilstest_20201019");
+        System.out.println(reIndexNum);
+    }
+
+    @Test
+    public void testReindexAsync(){
+        EsClientImpl esClient = new EsClientImpl();
+        esClient.reIndexAsync("esutilstest", "esutilstest_20201019");
     }
 }
 
